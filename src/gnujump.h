@@ -81,7 +81,9 @@
 #define REPEXT ".gjr"
 #define CONFDIR ".gnujump"
 
-#ifdef WIN32
+#if defined(__amigaos__)
+#define DEFSOUND AMIGA_SOUND
+#elif defined(WIN32)
 #define DEFSOUND "sound"
 #else
 #ifdef DEVEL

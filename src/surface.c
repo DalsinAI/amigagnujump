@@ -56,6 +56,11 @@ drawLine (SDL_Surface * dest, Uint8 dr, Uint8 dg, Uint8 db, Uint8 alpha,
   Uint8 r, g, b;
   Uint32 pixel;
   float a = (float) alpha / 255;
+#ifdef __amigaos__
+  /* 8-bit screen: blend through a table (amiga/amiga.c). */
+  const Uint8 *map = dest->format->BytesPerPixel == 1 ?
+    amiga_blend_map (dest, dr, dg, db, alpha) : NULL;
+#endif
 
   if (dy < 0)
     {
@@ -93,6 +98,13 @@ drawLine (SDL_Surface * dest, Uint8 dr, Uint8 dg, Uint8 db, Uint8 alpha,
 	  x0 += stepx;
 	  fraction += dy;
 
+#ifdef __amigaos__
+	  if (map)
+	    {
+	      putpixel (dest, x0, y0, map[getpixel (dest, x0, y0)]);
+	      continue;
+	    }
+#endif
 	  /* TODO: We should create a function for this */
 	  pixel = getpixel (dest, x0, y0);
 	  SDL_GetRGB (pixel, dest->format, &r, &g, &b);
@@ -116,6 +128,13 @@ drawLine (SDL_Surface * dest, Uint8 dr, Uint8 dg, Uint8 db, Uint8 alpha,
 	  y0 += stepy;
 	  fraction += dx;
 
+#ifdef __amigaos__
+	  if (map)
+	    {
+	      putpixel (dest, x0, y0, map[getpixel (dest, x0, y0)]);
+	      continue;
+	    }
+#endif
 	  pixel = getpixel (dest, x0, y0);
 	  SDL_GetRGB (pixel, dest->format, &r, &g, &b);
 	  r = applyAlpha (a, dr, r);
@@ -361,6 +380,13 @@ drawSquareAlpha (SDL_Surface * dest, Uint32 color, Uint8 alpha,
     }
 
   SDL_GetRGB (color, dest->format, &dr, &dg, &db);
+#ifdef __amigaos__
+  if (dest->format->BytesPerPixel == 1)
+    {
+      amiga_blend_rect (dest, dr, dg, db, alpha, x, y, w, h);
+      return;
+    }
+#endif
   Slock (dest);
   for (i = 0; i < w; i++)
     {

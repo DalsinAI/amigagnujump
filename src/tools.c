@@ -110,7 +110,15 @@ getDirList (char *folder, char ***tab)
     {
       while (n--)
 	{
+#ifdef __amigaos__
+	  /* A 255-character file name would run past sbuf: such a path is
+	     cut to nothing, which names no file. */
+	  if (snprintf (sbuf, sizeof (sbuf), "%s/%s", folder,
+			namelist[n]->d_name) >= (int) sizeof (sbuf))
+	    sbuf[0] = '\0';
+#else
 	  sprintf (sbuf, "%s/%s", folder, namelist[n]->d_name);
+#endif
 	  stat (sbuf, &buf);
 	  if (S_ISDIR (buf.st_mode)
 	      && (strcmp (namelist[n]->d_name, ".") != 0)
@@ -149,7 +157,15 @@ getFileList (char *folder, char ***tab)
     {
       while (n--)
 	{
+#ifdef __amigaos__
+	  /* A 255-character file name would run past sbuf: such a path is
+	     cut to nothing, which names no file. */
+	  if (snprintf (sbuf, sizeof (sbuf), "%s/%s", folder,
+			namelist[n]->d_name) >= (int) sizeof (sbuf))
+	    sbuf[0] = '\0';
+#else
 	  sprintf (sbuf, "%s/%s", folder, namelist[n]->d_name);
+#endif
 	  if ((strcmp (namelist[n]->d_name, ".") != 0)
 	      && (strcmp (namelist[n]->d_name, "..") != 0))
 	    {
