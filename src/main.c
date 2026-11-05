@@ -41,16 +41,26 @@ main (int argc, char *argv[])
   data_t gfxdata;
   char *cfgFile;
   char *hscFile;
+#ifndef __amigaos__
   char *homeDir;
+#endif
   char *replay = NULL;
 
+#ifndef __amigaos__		/* no NLS: the game is in English */
   /* Init gettext */
   setlocale (LC_ALL, "");
   textdomain (PACKAGE);
   bindtextdomain (PACKAGE, LOCALEDIR);
+#endif
 
   /* Get the config file name */
-#ifndef WIN32
+#if defined(__amigaos__)
+  /* No home directory: both files go beside the program. */
+  cfgFile = malloc (strlen (AMIGA_CFGFILE) + 1);
+  hscFile = malloc (strlen (AMIGA_HSCFILE) + 1);
+  strcpy (cfgFile, AMIGA_CFGFILE);
+  strcpy (hscFile, AMIGA_HSCFILE);
+#elif !defined(WIN32)
   homeDir = getenv ("HOME");
   cfgFile =
     malloc (sizeof (char) *
@@ -65,8 +75,10 @@ main (int argc, char *argv[])
   hscFile = malloc (sizeof (char) * strlen (HSCFILE) + 1);
   cfgFile[0] = hscFile[0] = '\0';
 #endif
+#ifndef __amigaos__
   strcat (cfgFile, CFGFILE);
   strcat (hscFile, HSCFILE);
+#endif
 
   if (!loadConfigFile (cfgFile))
     {

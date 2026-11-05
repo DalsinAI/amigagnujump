@@ -28,6 +28,37 @@ extern L_gblOptions gblOps;
 
 const int REPFPS[NREPSPEEDS] = { 5, 10, 20, 40, 80, 160, 320, 640 };
 
+#ifdef __amigaos__
+/* The replay body is written as it lies in memory, so the replays of the
+ * PCs GNUjump comes from are little-endian. Write and read it that way here
+ * too, a byte at a time, so replays go between the two. And a replay is a
+ * file from anywhere: reads past the end of what was loaded give 0. */
+static int
+repLeft (replay_t * rep, int n)
+{
+  return (char *) rep->buf - (char *) rep->bst + n <= rep->bodysize;
+}
+
+void
+repPushUInt32 (replay_t * rep, Uint32 data)
+{
+  Uint8 *p = (Uint8 *) rep->buf;
+  p[0] = data;
+  p[1] = data >> 8;
+  p[2] = data >> 16;
+  p[3] = data >> 24;
+  rep->buf += sizeof (Uint32);
+}
+
+void
+repPushUInt16 (replay_t * rep, Uint16 data)
+{
+  Uint8 *p = (Uint8 *) rep->buf;
+  p[0] = data;
+  p[1] = data >> 8;
+  rep->buf += sizeof (Uint16);
+}
+#else
 void
 repPushUInt32 (replay_t * rep, Uint32 data)
 {
@@ -41,6 +72,7 @@ repPushUInt16 (replay_t * rep, Uint16 data)
   *(Uint16 *) (rep->buf) = data;
   rep->buf += sizeof (Uint16);
 }
+#endif
 
 void
 repPushUInt8 (replay_t * rep, Uint8 data)
@@ -49,6 +81,36 @@ repPushUInt8 (replay_t * rep, Uint8 data)
   rep->buf += sizeof (Uint8);
 }
 
+#ifdef __amigaos__
+Uint32
+repGetUInt32 (replay_t * rep)
+{
+  Uint8 *p = (Uint8 *) rep->buf;
+  if (!repLeft (rep, 4))
+    return 0;
+  rep->buf += sizeof (Uint32);
+  return p[0] | p[1] << 8 | (Uint32) p[2] << 16 | (Uint32) p[3] << 24;
+}
+
+Uint16
+repGetUInt16 (replay_t * rep)
+{
+  Uint8 *p = (Uint8 *) rep->buf;
+  if (!repLeft (rep, 2))
+    return 0;
+  rep->buf += sizeof (Uint16);
+  return p[0] | p[1] << 8;
+}
+
+Uint8
+repGetUInt8 (replay_t * rep)
+{
+  if (!repLeft (rep, 1))
+    return 0;
+  rep->buf += sizeof (Uint8);
+  return *(Uint8 *) (rep->buf - sizeof (Uint8));
+}
+#else
 Uint32
 repGetUInt32 (replay_t * rep)
 {
@@ -69,6 +131,7 @@ repGetUInt8 (replay_t * rep)
   rep->buf += sizeof (Uint8);
   return *(Uint8 *) (rep->buf - sizeof (Uint8));
 }
+#endif
 
 void
 endReplay (game_t * game, int totalms)
@@ -86,8 +149,12 @@ endReplay (game_t * game, int totalms)
 	game->replay.record = game->heros[i].floor;
     }
 
+#ifndef __amigaos__
+  /* i is numHeros here: this writes past the end of heros[]. Left out on
+   * the Amiga, where it lands in whatever the next allocation is. */
   if (game->numHeros > 1)
     game->heros[i].floor /= gblOps.mpLives;
+#endif
 }
 
 void
@@ -197,6 +264,13 @@ getPlayerReplay (hero_t * hero, replay_t * rep)
   hero->dir = repGetUInt8 (rep);
   hero->angle = repGetUInt16 (rep);
   newid = repGetUInt8 (rep);
+#ifdef __amigaos__
+  /* Indices into the sprite tables: keep a bad file inside them. */
+  if (hero->dir != LEFT)
+    hero->dir = RIGHT;
+  if (newid < 0 || newid >= HEROANIMS)
+    newid = H_STAND;
+#endif
   hero->previd = hero->id;
   if (newid != hero->id)
     {
@@ -236,6 +310,10 @@ initGameReplay (game_t * game, data_t * gfx, replay_t * rep)
       game->floor_r[i] = repGetUInt8 (rep);
     }
   game->numHeros = repGetUInt8 (rep);
+#ifdef __amigaos__
+  if (game->numHeros > MAX_PLAYERS)
+    game->numHeros = MAX_PLAYERS;
+#endif
   game->heros = malloc (sizeof (hero_t) * game->numHeros);
   for (i = 0; i < game->numHeros; i++)
     {
@@ -619,6 +697,13 @@ loadReplay (data_t * gfx, char *file)
   int i;
 
   size = getFileSize (file);
+#ifdef __amigaos__
+  if (size <= 0)
+    {
+      fprintf (stderr, _("ERROR: Could not open replay %s\n"), file);
+      return FALSE;
+    }
+#endif
 
   if ((fh = fopen (file, "rb")) == NULL)
     {
@@ -631,12 +716,28 @@ loadReplay (data_t * gfx, char *file)
     {
       fprintf (stderr, _("ERROR: Replay %s is of a different version.\n"),
 	       file);
+#ifdef __amigaos__
+      fclose (fh);
+#endif
       return FALSE;
     }
 
   i = 0;
   comment = malloc (sizeof (char) * MAX_CHAR);
+#ifdef __amigaos__
+  /* The comment ends at its '\0', at MAX_CHAR - 1 characters, or at the end
+   * of the file, not past the end of comment[]. */
+  {
+    int c = 0;
+    while (i < MAX_CHAR - 1 && (c = fgetc (fh)) != EOF && c != '\0')
+      comment[i++] = c;
+    comment[i] = '\0';
+    if (c != '\0')
+      while ((c = fgetc (fh)) != EOF && c != '\0');
+  }
+#else
   while ((comment[i++] = fgetc (fh)) != '\0');
+#endif
 
   rep.record = fgetUint32 (fh);
   rep.totalms = fgetUint32 (fh);
@@ -683,12 +784,25 @@ getReplayComment (char *file)
     {
       fprintf (stderr, _("WARNING: Replay %s is of a different version.\n"),
 	       file);
+#ifdef __amigaos__
+      fclose (fh);
+#endif
       return NULL;
     }
 
   i = 0;
   comment = malloc (sizeof (char) * MAX_CHAR);
+#ifdef __amigaos__
+  {
+    int c = 0;
+    while (i < MAX_CHAR - 1 && (c = fgetc (fh)) != EOF && c != '\0')
+      comment[i++] = c;
+    comment[i] = '\0';
+  }
+  fclose (fh);			/* the menu opens every replay in the drawer */
+#else
   while ((comment[i++] = fgetc (fh)) != '\0');
+#endif
 
   return comment;
 }

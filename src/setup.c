@@ -35,7 +35,11 @@ initGblOps (void)
   char *cfgDir;
 
   gblOps.aa = 0;
+#ifdef __amigaos__
+  gblOps.useGL = FALSE;		/* acsdl12 has no OpenGL */
+#else
   gblOps.useGL = TRUE;
+#endif
   gblOps.w = 0;
   gblOps.h = 0;
   gblOps.bpp = BPPAUTO;
@@ -53,6 +57,26 @@ initGblOps (void)
   gblOps.sndvolume = 9;
   gblOps.musvolume = 6;
 
+#ifdef __amigaos__
+  /* Skins in PROGDIR:skins, replays written to PROGDIR:replays (made here
+   * if it is missing); the config and records are beside the program. */
+  (void) homeDir;
+  (void) cfgDir;
+  if (access (AMIGA_REPLAYS, F_OK) < 0)
+    mkdir (AMIGA_REPLAYS, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  gblOps.dataDir = malloc (strlen (AMIGA_SKINS "/" DEFTHEME) + 1);
+  strcpy (gblOps.dataDir, AMIGA_SKINS "/" DEFTHEME);
+  gblOps.repDir = malloc (strlen (AMIGA_REPLAYS) + 1);
+  strcpy (gblOps.repDir, AMIGA_REPLAYS);
+  gblOps.ntfolders = 1;
+  gblOps.nrfolders = 1;
+  gblOps.themeDirs = malloc (sizeof (char *) * gblOps.ntfolders);
+  gblOps.repDirs = malloc (sizeof (char *) * gblOps.nrfolders);
+  gblOps.themeDirs[0] = malloc (strlen (AMIGA_SKINS) + 1);
+  strcpy (gblOps.themeDirs[0], AMIGA_SKINS);
+  gblOps.repDirs[0] = malloc (strlen (AMIGA_REPLAYS) + 1);
+  strcpy (gblOps.repDirs[0], AMIGA_REPLAYS);
+#else
 #ifndef WIN32
   homeDir = getenv ("HOME");
   cfgDir = malloc (sizeof (char) * (strlen (homeDir) + strlen (CONFDIR) + 2));
@@ -118,6 +142,7 @@ initGblOps (void)
   sprintf (gblOps.themeDirs[1], "skins");
 #endif
 #endif
+#endif /* __amigaos__ */
 
   /* Default Keys */
   gblOps.keys[0][LEFTK] = KEY_LEFT1;
@@ -437,6 +462,12 @@ setWindow ()
       break;
     }
 
+#ifdef __amigaos__
+  /* acsdl12: 8-bit screens and no OpenGL, whatever the config says. */
+  gblOps.useGL = FALSE;
+  bpp = 8;
+#endif
+
   if (!gblOps.aa)
     gblOps.texFilter = GL_NEAREST;
   else
@@ -688,6 +719,9 @@ loadGraphics (data_t * data, char *fname)
   gblOps.h = getValue_int (fh, "window_height");
 
   setWindow ();
+#ifdef __amigaos__
+  amiga_skin_palette (screen, fname);
+#endif
 
   getValue_str (fh, "sound_theme", str, FALSE);
   if (data->soundloaded)
