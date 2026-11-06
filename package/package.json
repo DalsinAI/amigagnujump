@@ -1,0 +1,41 @@
+{
+  "drawer": "GNUjump",
+  "drawer_icon": "amiga/icons/GNUjump.info",
+  "archive": "gnujump-{version}-68040",
+  "members": [
+    {
+      "name": "gnujump",
+      "build": "gnujump",
+      "check": "executable_sha256"
+    },
+    {
+      "name": "Libs/acgame.library",
+      "build": "acgame.library",
+      "check": "acgame_library_sha256"
+    },
+    {
+      "name": "",
+      "tar": "drawer.tar"
+    }
+  ],
+  "aminet": [
+    ["Short", "GNUjump 1.0.8, jump-up platform game, 68040+FPU"],
+    ["Author", "GNUjump: Juan Pedro Bolivar Puente and others; Amiga port: AmiCradle Team"],
+    ["Uploader", "AmiCradle Team"],
+    ["Type", "game/jump"],
+    ["Version", "{version}"],
+    ["Requires", "AmigaOS 3.x, 68040/68060 with FPU, AGA or RTG, AHI"],
+    ["Architecture", "m68k-amigaos >= 3.0"]
+  ],
+  "root": [
+    {
+      "name": "Install-GNUjump",
+      "repo": "package/installer/Install-GNUjump",
+      "installer": true
+    },
+    {
+      "name": "Install-GNUjump.info",
+      "repo": "package/installer/Install-GNUjump.info"
+    }
+  ]
+}
