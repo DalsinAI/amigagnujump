@@ -2,7 +2,9 @@
 #
 #   make -f amiga/Makefile.amigaos STOVE=/path/to/os32-gcc16/prefix \
 #        NDK=/path/to/gfopensdk/OpenNDK/Include_H \
-#        ACSDL=/path/to/amicradle-guest/gameports/acsdl12
+#        ACSDL=/path/to/amicradle-guest/gameports/acsdl12 \
+#        ACSDLLIB=/path/to/acsdl12/build ACGAME=/path/to/acgame \
+#        ACGAMELIB=/path/to/acgame/build-amiga
 #
 # STOVE is GFOpenAmigaGCC 16.2.0-open4 or later. ACSDL is acsdl12, built with
 # its own Makefile.amigaos (it holds zlib's inflate for the PNGs; nothing
@@ -10,13 +12,18 @@
 # The software renderer only: amiga/gl2d_none.c stands in for SDL_2dgl.c.
 # The skins are amiga/skins (made from skins by amiga/tools/skin8.py, in
 # 256 colours a skin) and the sounds amiga/sound (the Ogg sounds as WAVs).
+# acsdl12 is built with ACG= into ACSDLLIB, without its own copy of ACGame:
+# the game gets ACGame from acgame.library, through ACGAMELIB's libacgame.a
+# (DalsinAI/acgame's stubs). package/acgame-deps.sh builds both.
 # Output: build/amigaos/GNUjump/ with the program, skins/, sound/, replays/,
 # ReadMe and COPYING, their icons, and GNUjump.info beside the drawer.
 
 STOVE   ?= $(HOME)/AmiCradle/stoves/os32-gcc16/prefix
 NDK     ?= $(HOME)/AmiCradle/gfopensdk/OpenNDK/Include_H
 ACSDL   ?= ../amicradle-guest/gameports/acsdl12
+ACSDLLIB ?= $(ACSDL)/build/amigaos
 ACGAME  ?= $(ACSDL)/../acgame
+ACGAMELIB ?= $(ACGAME)/build-amiga
 ZLIB    ?= ../zlib-1.3.1
 CC      = $(STOVE)/bin/m68k-amigaos-gcc
 CPU     ?= -m68040 -m68881
@@ -39,7 +46,7 @@ ICON    = amiga/icons/GNUjump.info
 all: $(OUT)/gnujump data
 
 $(OUT)/gnujump: $(OBJS) | $(OUT)
-	$(CC) $(LDFLAGS) -o $@ $^ $(ACSDL)/build/amigaos/libacsdl12.a -lm
+	$(CC) $(LDFLAGS) -o $@ $^ $(ACSDLLIB)/libacsdl12.a $(ACGAMELIB)/libacgame.a -lm
 
 # The data, and an icon for every drawer: skins, sound and replays have
 # their own; each drawer inside skins gets the GNUjump drawer's icon, which
