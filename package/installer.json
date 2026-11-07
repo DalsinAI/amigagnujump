@@ -1,0 +1,17 @@
+{
+  "name": "GNUjump",
+  "version": "1.0.8-amiga1",
+  "drawer": "GNUjump",
+  "program": "gnujump",
+  "cpu": "68040",
+  "fpu": true,
+  "space": 6000000,
+  "modules": [],
+  "keep": [
+    "replays",
+    "gnujump.cfg",
+    "gnujump.hsc"
+  ],
+  "parent": "Work:Games",
+  "badge": "../amiga/icons/art/gnujump.png"
+}

@@ -17,7 +17,8 @@ OpenGL renderer is not built (acsdl12 has no OpenGL).
         STOVE=/path/to/openamigagcc-16.2.0-open4-x86_64-linux \
         NDK=/path/to/gfopensdk/OpenNDK/Include_H \
         ACSDL=/path/to/amicradle-guest/gameports/acsdl12 \
-        ACGAME=/path/to/amicradle-guest/gameports/acgame
+        ACSDLLIB=/path/to/acsdl12/build ACGAME=/path/to/acgame \
+        ACGAMELIB=/path/to/acgame/build-amiga
 
 acsdl12 is built with its own `Makefile.amigaos`. This gives
 `build/amigaos/GNUjump/` with `gnujump`, `skins/`, `sound/`, `replays/`,
@@ -26,6 +27,17 @@ this ReadMe, `COPYING`, an icon for each of them and for every drawer in
 everything is found through `PROGDIR:`. The icons are made from the
 default skin's hero with AmiCradle's `port_icons.py` from
 `amiga/icons/icons.json`.
+
+## Installing
+
+Unpack the archive anywhere (on AmiCradle: `SYS:Utilities/OpenCompress x
+gnujump-...lha RAM:`), then double-click `Install-GNUjump` beside the
+GNUjump drawer: it asks where to put the game (`Work:Games` by default)
+and keeps the replays, options and records of an earlier install. The
+drawer's `Libs` holds the acgame.library the game was built against, and
+the game opens that copy first. `package/build-amiga.sh` makes the
+archive (STOVE and OUT set; it fetches and builds acgame, acsdl12 and zlib
+at pinned commits).
 
 ## Playing
 
