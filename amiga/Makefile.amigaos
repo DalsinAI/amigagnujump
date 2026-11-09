@@ -48,20 +48,17 @@ all: $(OUT)/gnujump data
 $(OUT)/gnujump: $(OBJS) | $(OUT)
 	$(CC) $(LDFLAGS) -o $@ $^ $(ACSDLLIB)/libacsdl12.a $(ACGAMELIB)/libacgame.a -lm
 
-# The data, and an icon for every drawer: skins, sound and replays have
-# their own; each drawer inside skins gets the GNUjump drawer's icon, which
-# Workbench places itself.
+# The data; of its drawers only replays (the player's own) has an icon.
 data: | $(OUT)
 	rm -rf $(OUT)/skins $(OUT)/sound
 	cp -r amiga/skins $(OUT)/skins
 	mkdir -p $(OUT)/sound $(OUT)/replays
 	cp amiga/sound/*.wav $(OUT)/sound/
 	sed -e 's/"silence\.ogg"/"none"/' -e 's/\.ogg"/.wav"/' sound/config.sounds > $(OUT)/sound/config.sounds
-	cd $(OUT)/skins && find . -mindepth 1 -type d | while read d; do cp "$(CURDIR)/$(ICON)" "$$d.info"; done
 	cp AMIGA_PORT.md $(OUT)/ReadMe
 	cp COPYING $(OUT)/COPYING
 	cp amiga/icons/gnujump.info amiga/icons/ReadMe.info amiga/icons/COPYING.info \
-	   amiga/icons/skins.info amiga/icons/sound.info amiga/icons/replays.info $(OUT)/
+	   amiga/icons/replays.info $(OUT)/
 	cp $(ICON) $(BUILD)/
 
 $(BUILD)/%.o: src/%.c | $(BUILD)
