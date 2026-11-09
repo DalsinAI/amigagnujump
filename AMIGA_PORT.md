@@ -22,10 +22,10 @@ OpenGL renderer is not built (acsdl12 has no OpenGL).
 
 acsdl12 is built with its own `Makefile.amigaos`. This gives
 `build/amigaos/GNUjump/` with `gnujump`, `skins/`, `sound/`, `replays/`,
-this ReadMe, `COPYING`, an icon for each of them and for every drawer in
-`skins/`, and `GNUjump.info` beside the drawer. Run it from that drawer:
-everything is found through `PROGDIR:`. The icons are made from the
-default skin's hero with AmiCradle's `port_icons.py` from
+this ReadMe, `COPYING`, icons for the program, the ReadMe, the licence and
+`replays/`, and `GNUjump.info` beside the drawer. Run it from that drawer:
+everything is found through `PROGDIR:`. The icons are made from our
+own art (`amiga/icons/art/gnujump.svg`) with AmiCradle's `port_icons.py` from
 `amiga/icons/icons.json`.
 
 ## Installing
